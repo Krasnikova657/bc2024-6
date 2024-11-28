@@ -3,6 +3,9 @@ const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
 const { Command } = require('commander');
+const YAML = require('yaml');
+const swaggerUi = require('swagger-ui-express');
+
 const app = express();
 const upload = multer();
 
@@ -20,6 +23,11 @@ if (!fs.existsSync(cache)) {
 }
 
 app.use(express.urlencoded({ extended: true }));
+
+// Swagger integration
+const swaggerFile = fs.readFileSync('./openapi.yaml', 'utf8'); // Читає файл openapi.yaml
+const swaggerDocument = YAML.parse(swaggerFile); // Парсить YAML-документ
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument)); // Додає маршрут для Swagger
 
 // GET /UploadForm.html
 app.get('/UploadForm.html', (req, res) => {
@@ -101,6 +109,12 @@ app.post('/write', upload.none(), (req, res) => {
     res.status(201).send('Note created');
 });
 
+// Root route
+app.get('/', (req, res) => {
+    res.send('Welcome to the Notes API! Visit /docs for Swagger documentation.');
+});
+
+// Start server
 app.listen(port, host, () => {
     console.log(`Server is running at http://${host}:${port}`);
 });
